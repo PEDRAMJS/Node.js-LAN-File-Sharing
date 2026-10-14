@@ -48,3 +48,11 @@ package-lock.json
 forever-config.json
 forever.log
 forever_err.log
+# Encrypted server state, TLS key and the secret key file
+/data
+/FSK
+
+# Local backups, credentials and personal artifacts (never publish)
+/backup/
+/backup.sh
+/numberland_pay_report.pdf

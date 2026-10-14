@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>LAN File Sharing - Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <main class="admin">
+    <header class="admin-header">
+      <h1>Admin panel</h1>
+      <span id="stateBadge" class="state-badge"></span>
+      <button type="button" id="logoutButton" class="button-secondary hidden">Log out</button>
+    </header>
+
+    <div id="debugWarning" class="banner banner-danger hidden">
+      <strong>--debug-print-passwords is on.</strong> File passwords are printed in the server terminal. Never use this in production.
+    </div>
+
+    <p id="globalError" class="banner banner-danger hidden" role="alert"></p>
+
+    <!-- First run -->
+    <section id="setupView" class="card hidden">
+      <h2>Set up the server</h2>
+      <p>Choose a secret key. It encrypts file settings, password data and bans on disk. It is never stored, so keep it safe: without it that data can't be read.</p>
+      <form id="setupForm">
+        <label>Secret key<input type="password" name="secret" autocomplete="new-password" required></label>
+        <label>Repeat secret key<input type="password" name="repeat" autocomplete="new-password" required></label>
+        <p class="hint">At least <span class="min-secret-length">12</span> characters.</p>
+        <button type="submit">Set up and unlock</button>
+      </form>
+    </section>
+
+    <!-- Locked, or unlocked but not logged in -->
+    <section id="loginView" class="card hidden">
+      <h2 id="loginTitle">Unlock the server</h2>
+      <p id="loginText"></p>
+      <form id="loginForm">
+        <label>Secret key<input type="password" name="secret" autocomplete="current-password" required></label>
+        <button type="submit" id="loginButton">Unlock</button>
+      </form>
+    </section>
+
+    <!-- Logged in -->
+    <div id="panelView" class="hidden">
+      <section class="card">
+        <h2>Settings</h2>
+        <form id="configForm" class="config-form"></form>
+      </section>
+
+      <section class="card">
+        <div class="card-title-row">
+          <h2>Password attempts &amp; bans</h2>
+          <button type="button" class="button-secondary" data-refresh="bans">Refresh</button>
+        </div>
+        <p class="hint">Failed password attempts per IP in the last 24 hours.</p>
+        <div id="bansTable"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-title-row">
+          <h2>Files with settings</h2>
+          <button type="button" class="button-secondary" data-refresh="files">Refresh</button>
+        </div>
+        <div id="filesTable"></div>
+      </section>
+
+      <section class="card">
+        <h2>Security</h2>
+        <div id="tlsInfo"></div>
+        <h3>Change secret key</h3>
+        <form id="rotateForm">
+          <label>Current secret key<input type="password" name="current" autocomplete="current-password" required></label>
+          <label>New secret key<input type="password" name="next" autocomplete="new-password" required></label>
+          <label>Repeat new secret key<input type="password" name="repeat" autocomplete="new-password" required></label>
+          <button type="submit">Change secret key</button>
+        </form>
+      </section>
+    </div>
+  </main>
+  <div id="toast" class="toast hidden" role="status"></div>
+  <script src="admin.js"></script>
+</body>
+</html>

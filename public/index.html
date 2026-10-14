@@ -21,7 +21,8 @@
   <div class="container">
     <div class="row">
       <div class="column">
-        <h1 class="text-center">LAN File Sharing</h1>
+        <h1 class="text-center">WELCOME</h1>
+        <h3 class="text-center">Sharing is caring</h3>
         <img id="theQRCode">
         <h4 id="IPandPort"></h4>
       </div>
@@ -30,7 +31,7 @@
       <div class="column">
         
         <form ref='uploadForm' id='uploadForm' action="" method="post" enctype="multipart/form-data">
-          <p> Drag file in page or click below: </p>
+          <p> you can drag and drop as well! </p>
           <div id="fileToUploadButtonBox">
             <div id="fileToUploadButton" class="btn btn-primary">
               <span class="button-text">Choose File</span>
@@ -69,6 +70,144 @@
   </div>
   
   
+  <div id="advancedModal">
+    <div class="modal-backdrop" v-if="isOpen" @click.self="close()">
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="advancedModalTitle">
+        <button type="button" class="modal-close" aria-label="Close" @click="close()">&times;</button>
+        <h2 id="advancedModalTitle">Upload settings</h2>
+
+        <div class="settings-section" :class="{'open': openSection == 'autoDelete'}">
+          <button
+            type="button"
+            class="section-header"
+            aria-controls="sectionAutoDelete"
+            :aria-expanded="String(openSection == 'autoDelete')"
+            @click="toggleSection('autoDelete')"
+          >
+            <span class="section-title">Auto-delete</span>
+            <span class="section-summary">{{ autoDeleteSummary }}</span>
+            <span class="section-chevron" aria-hidden="true">&#8250;</span>
+          </button>
+          <div class="section-body" id="sectionAutoDelete" :inert="openSection != 'autoDelete'">
+            <div class="section-inner">
+              <label class="modal-toggle">
+                <input type="checkbox" v-model="autoDelete">
+                Delete automatically after
+              </label>
+              <duration-clock
+                v-if="autoDelete"
+                v-model="deleteAfterMinutes"
+                :max-minutes="maxAutoDeleteMinutes"
+              ></duration-clock>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section" :class="{'open': openSection == 'downloadLimit'}">
+          <button
+            type="button"
+            class="section-header"
+            aria-controls="sectionDownloadLimit"
+            :aria-expanded="String(openSection == 'downloadLimit')"
+            @click="toggleSection('downloadLimit')"
+          >
+            <span class="section-title">Download limit</span>
+            <span class="section-summary">{{ downloadLimitSummary }}</span>
+            <span class="section-chevron" aria-hidden="true">&#8250;</span>
+          </button>
+          <div class="section-body" id="sectionDownloadLimit" :inert="openSection != 'downloadLimit'">
+            <div class="section-inner">
+              <label class="modal-field">
+                Complete downloads before deletion
+                <input type="number" min="-1" step="1" v-model.number="maxDownloads">
+                <span class="modal-hint">{{ maxDownloads == -1 ? "Unlimited" : "Deleted after " + maxDownloads + " complete download" + (maxDownloads == 1 ? "" : "s") }} &middot; -1 for unlimited</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section" :class="{'open': openSection == 'password'}">
+          <button
+            type="button"
+            class="section-header"
+            aria-controls="sectionPassword"
+            :aria-expanded="String(openSection == 'password')"
+            @click="toggleSection('password')"
+          >
+            <span class="section-title">Password</span>
+            <span class="section-summary">{{ passwordSummary }}</span>
+            <span class="section-chevron" aria-hidden="true">&#8250;</span>
+          </button>
+          <div class="section-body" id="sectionPassword" :inert="openSection != 'password'">
+            <div class="section-inner">
+              <div class="password-modes" role="radiogroup" aria-label="Password protection">
+                <label><input type="radio" value="off" v-model="passwordMode"> Off</label>
+                <label><input type="radio" value="auto" v-model="passwordMode"> Generate one</label>
+                <label><input type="radio" value="manual" v-model="passwordMode"> Choose my own</label>
+              </div>
+              <p class="modal-hint" v-if="passwordMode == 'auto'">A strong password is shown once after the upload. Copy it and share it with whoever should download the file.</p>
+              <div v-if="passwordMode == 'manual'" class="modal-field">
+                <div class="password-input">
+                  <input
+                    :type="showPassword ? 'text' : 'password'"
+                    v-model="manualPassword"
+                    autocomplete="new-password"
+                    :minlength="minPasswordLength"
+                    aria-label="File password"
+                    placeholder="File password"
+                  >
+                  <button type="button" class="password-toggle" @click="showPassword = !showPassword">{{ showPassword ? "Hide" : "Show" }}</button>
+                </div>
+                <span class="modal-hint" :class="'strength-' + passwordStrength.level">{{ passwordStrength.text }}</span>
+              </div>
+              <p class="modal-hint" v-if="passwordMode != 'off'">The file is encrypted with this password. Nobody, not even the server owner, can open it without the password, and it can't be recovered.</p>
+            </div>
+          </div>
+        </div>
+
+        <p class="modal-warning">These settings are locked once the upload finishes.</p>
+        <p class="modal-error" v-if="errorMessage">{{ errorMessage }}</p>
+
+        <button type="button" class="btn btn-primary modal-upload" @click="chooseFiles()">Choose files</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="passwordResultModal">
+    <div class="modal-backdrop" v-if="isOpen" @click.self="close()">
+      <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="passwordResultTitle">
+        <button type="button" class="modal-close" aria-label="Close" @click="close()">&times;</button>
+        <h2 id="passwordResultTitle">File password</h2>
+        <p class="modal-hint">For {{ fileNames }}</p>
+        <div class="password-result">
+          <input ref="passwordField" type="text" readonly :value="password" aria-label="File password" @focus="$event.target.select()">
+          <button type="button" class="btn btn-primary" @click="copy()">{{ copied ? "Copied" : "Copy" }}</button>
+        </div>
+        <p class="modal-warning">This password is only shown on this page. Copy it now, it can't be recovered after you refresh.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="unlockModal">
+    <div class="modal-backdrop" v-if="isOpen" @click.self="close()">
+      <form class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="unlockTitle" @submit.prevent="unlock()">
+        <button type="button" class="modal-close" aria-label="Close" @click="close()">&times;</button>
+        <h2 id="unlockTitle">&#128274; Password protected</h2>
+        <p class="modal-hint unlock-file-name">{{ fileName }}</p>
+        <template v-if="bannedUntil == null">
+          <label class="modal-field">
+            Password
+            <input ref="passwordField" type="password" v-model="password" autocomplete="off" :disabled="isBusy" required>
+          </label>
+          <p class="modal-error" v-if="errorMessage">{{ errorMessage }}</p>
+          <p class="modal-hint" v-else-if="attemptsLeft != null">{{ attemptsLeft }} attempt{{ attemptsLeft == 1 ? "" : "s" }} left</p>
+          <button type="submit" class="btn btn-primary modal-upload" :disabled="isBusy || password == ''">{{ isBusy ? "Checking..." : "Download" }}</button>
+        </template>
+        <p class="modal-error" v-else>Too many wrong passwords. You can try again after {{ bannedUntilText }}.</p>
+      </form>
+    </div>
+  </div>
+
   <div id="successoverlay">
     <span class="title noselect" id="progressMessage">...</span>
   </div>
